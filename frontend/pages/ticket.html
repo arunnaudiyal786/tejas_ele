@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Management - Long-Running Query Manager</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ticket Management</h1>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/tickets">Tickets</a>
+                <a href="/api/docs" target="_blank">API Docs</a>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Create New Ticket Section -->
+            <section class="create-ticket-section">
+                <h2>Create New Ticket</h2>
+                <form id="newTicketForm">
+                    <label for="newTicketQueryId">Query ID:</label>
+                    <input type="number" id="newTicketQueryId" min="1" required>
+                    <button type="button" onclick="verifyQuery()">Verify Query</button>
+                    
+                    <div id="queryInfo" style="display: none;">
+                        <h4>Query Information:</h4>
+                        <div id="queryDetails"></div>
+                    </div>
+                    
+                    <label for="newTicketDescription">Issue Description:</label>
+                    <textarea id="newTicketDescription" rows="4" placeholder="Describe the issue with this query..." required></textarea>
+                    
+                    <button type="submit">Create Ticket</button>
+                </form>
+            </section>
+
+            <!-- Open Tickets Section -->
+            <section class="open-tickets-section">
+                <h2>Open Tickets</h2>
+                <button onclick="refreshOpenTickets()">Refresh</button>
+                <div id="openTicketsList" class="tickets-list"></div>
+            </section>
+
+            <!-- All Tickets Section -->
+            <section class="all-tickets-section">
+                <h2>All Tickets</h2>
+                <button onclick="refreshAllTickets()">Refresh</button>
+                <div class="filter-section">
+                    <select id="statusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="open">Open</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                    <button onclick="applyFilter()">Apply Filter</button>
+                </div>
+                <div id="allTicketsList" class="tickets-list"></div>
+            </section>
+
+            <!-- Agent Status Section -->
+            <section class="agent-status-section">
+                <h2>AI Agent Status</h2>
+                <button onclick="refreshAgentStatus()">Check Agent Status</button>
+                <div id="agentStatus" class="status-section">
+                    <p>Agent monitoring system status will appear here...</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Resolve Ticket Modal -->
+        <div id="resolveModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeResolveModal()">&times;</span>
+                <h3>Resolve Ticket</h3>
+                <form id="resolveForm">
+                    <input type="hidden" id="resolveTicketId">
+                    <label for="resolutionDetails">Resolution Details:</label>
+                    <textarea id="resolutionDetails" rows="4" placeholder="Describe how this ticket was resolved..." required></textarea>
+                    <button type="submit">Resolve Ticket</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Terminate Session Modal -->
+        <div id="terminateModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeTerminateModal()">&times;</span>
+                <h3>Terminate Database Session</h3>
+                <div id="terminateInfo"></div>
+                <form id="terminateForm">
+                    <input type="hidden" id="terminatePid">
+                    <p><strong>Warning:</strong> This will forcefully terminate the database session and may cause data loss. Are you sure?</p>
+                    <button type="submit" class="btn btn-danger">Terminate Session</button>
+                    <button type="button" onclick="closeTerminateModal()">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/ticket.js"></script>
+</body>
+</html>

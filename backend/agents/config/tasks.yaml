@@ -1,0 +1,20 @@
+analyze_and_terminate_query:
+  description: >
+    Analyze a support ticket to determine if it relates to a long-running query that needs to be terminated.
+    
+    Steps to follow:
+    1. Read the ticket details using get_ticket_details tool
+    2. If the ticket is about a long-running query, extract the process ID or query ID
+    3. Check the current status of the query using get_query_status tool
+    4. If the query is still running and causing issues, use kill_query tool to terminate it
+    5. Update the ticket status with detailed resolution notes using update_ticket_status tool
+    
+    Always provide clear reasoning for your actions and include technical details in your resolution notes.
+  expected_output: >
+    A comprehensive report that includes:
+    - Ticket analysis summary
+    - Query status information
+    - Action taken (query terminated or not)
+    - Reasoning for the decision
+    - Updated ticket status with resolution notes
+  agent: query_termination_agent

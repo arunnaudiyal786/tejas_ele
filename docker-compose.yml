@@ -1,0 +1,225 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: longquery_postgres
+    environment:
+      POSTGRES_DB: longquery_demo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - longquery_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d longquery_demo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis (for caching and session storage)
+  redis:
+    image: redis:7-alpine
+    container_name: longquery_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - longquery_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # FastAPI Application
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: longquery_app
+    environment:
+      # Database Configuration
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: longquery_demo
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      
+      # Redis Configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      
+      # OpenAI API Key (replace with your key)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-fake-key-for-demo}
+      
+      # Application Configuration
+      DEBUG: false
+      HOST: 0.0.0.0
+      PORT: 8000
+      SQLITE_PATH: /app/data
+      
+      # Agent Configuration
+      AGENT_CHECK_INTERVAL: 30
+      AGENT_ENABLED: true
+      
+      # Logging
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - app_metadata:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - longquery_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    command: ["python", "backend/main.py"]
+
+  # CrewAI Workflow Orchestrator (separate service)
+  crew_orchestrator:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: longquery_crew
+    environment:
+      # Database Configuration
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: longquery_demo
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      
+      # OpenAI API Key
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-fake-key-for-demo}
+      
+      # Agent Configuration
+      AGENT_CHECK_INTERVAL: 30
+      LOG_LEVEL: INFO
+      SQLITE_PATH: /app/data
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - app_metadata:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+    networks:
+      - longquery_network
+    restart: unless-stopped
+    command: ["python", "backend/flow.py", "monitor", "--interval", "30"]
+
+  # Database Initialization Service
+  db_init:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: longquery_db_init
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: longquery_demo
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - longquery_network
+    restart: "no"
+    command: ["python", "backend/setup_db.py"]
+
+  # Nginx Reverse Proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: longquery_nginx
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - app
+    networks:
+      - longquery_network
+    restart: unless-stopped
+    profiles:
+      - production
+
+  # Monitoring with Prometheus (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: longquery_prometheus
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - longquery_network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # Grafana for Visualization (optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: longquery_grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - longquery_network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  app_metadata:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  longquery_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16

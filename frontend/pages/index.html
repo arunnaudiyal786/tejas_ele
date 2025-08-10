@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Long-Running Query Manager</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Long-Running Query Manager</h1>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/tickets">Tickets</a>
+                <a href="/api/docs" target="_blank">API Docs</a>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Query Execution Section -->
+            <section class="query-section">
+                <h2>Execute Query</h2>
+                
+                <!-- Predefined Queries -->
+                <div class="query-selector">
+                    <h3>Predefined Slow Queries</h3>
+                    <select id="sampleQuerySelect">
+                        <option value="">Select a sample query...</option>
+                    </select>
+                    <button onclick="loadSampleQuery()">Load Query</button>
+                </div>
+
+                <!-- Query Input -->
+                <div class="query-input">
+                    <label for="queryName">Query Name (optional):</label>
+                    <input type="text" id="queryName" placeholder="e.g., Monthly Revenue Analysis">
+                    
+                    <label for="queryText">SQL Query:</label>
+                    <textarea id="queryText" rows="8" placeholder="Enter your SQL query here..."></textarea>
+                    
+                    <button onclick="executeQuery()" id="executeBtn">Execute Query</button>
+                </div>
+
+                <div id="queryResult" class="result-section" style="display: none;">
+                    <h3>Query Status</h3>
+                    <div id="queryStatus"></div>
+                </div>
+            </section>
+
+            <!-- Running Queries Section -->
+            <section class="queries-section">
+                <h2>All Queries</h2>
+                <button onclick="refreshQueries()">Refresh</button>
+                <div id="queriesList" class="queries-list"></div>
+            </section>
+
+            <!-- Active Sessions Section -->
+            <section class="sessions-section">
+                <h2>Active PostgreSQL Sessions</h2>
+                <button onclick="refreshSessions()">Refresh</button>
+                <div id="sessionsList" class="sessions-list"></div>
+            </section>
+
+            <!-- Recent Tickets Section -->
+            <section class="tickets-section">
+                <h2>Recent Tickets</h2>
+                <button onclick="refreshTickets()">Refresh</button>
+                <a href="/tickets" class="btn btn-primary">Manage Tickets</a>
+                <div id="ticketsList" class="tickets-list"></div>
+            </section>
+        </main>
+
+        <!-- Create Ticket Modal -->
+        <div id="ticketModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeTicketModal()">&times;</span>
+                <h3>Create Ticket</h3>
+                <form id="ticketForm">
+                    <input type="hidden" id="ticketQueryId">
+                    <label for="ticketDescription">Description:</label>
+                    <textarea id="ticketDescription" rows="4" placeholder="Describe the issue with this query..." required></textarea>
+                    <button type="submit">Create Ticket</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
