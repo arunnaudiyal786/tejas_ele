@@ -2,16 +2,25 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 import psycopg2
 import os
+import yaml
 from typing import Optional
+
+def load_config():
+    """Load configuration from config.yaml file"""
+    config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config.yaml')
+    with open(config_path, 'r') as file:
+        return yaml.safe_load(file)
 
 class DatabaseConnection:
     def __init__(self):
+        config = load_config()
+        db_config = config['database']
         self.conn_params = {
-            'host': os.getenv('DB_HOST', 'localhost'),
-            'port': os.getenv('DB_PORT', '5433'),
-            'database': os.getenv('DB_NAME', 'testdb'),
-            'user': os.getenv('DB_USER', 'testuser'),
-            'password': os.getenv('DB_PASSWORD', 'testpass')
+            'host': db_config['host'],
+            'port': db_config['port'],
+            'database': db_config['name'],
+            'user': db_config['user'],
+            'password': db_config['password']
         }
     
     def get_connection(self):
