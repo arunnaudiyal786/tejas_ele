@@ -1,0 +1,31 @@
+# Tejas Database Monitoring Application Configuration
+
+# Database Configuration
+database:
+  host: localhost
+  port: 5433
+  name: testdb
+  user: postgres
+  password: postgres
+  
+# Application Configuration
+app:
+  debug: true
+  host: "0.0.0.0"
+  port: 8000
+  
+# Agent Configuration
+agent:
+  check_interval: 30  # seconds between ticket checks
+  enabled: true
+  
+# Logging Configuration
+logging:
+  level: INFO
+  
+# Docker Configuration (for reference)
+docker:
+  postgres:
+    image: postgres:15
+    internal_port: 5432
+    external_port: 5433
