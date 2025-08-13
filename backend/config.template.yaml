@@ -1,4 +1,5 @@
-# Tejas Database Monitoring Application Configuration
+# Tejas Database Monitoring Application Configuration Template
+# Copy this file to config.yaml and fill in your actual values
 
 # Database Configuration
 database:

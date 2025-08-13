@@ -101,7 +101,7 @@ ipython_config.py
 #uv.lock
 
 # poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
+#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
 #   This is especially recommended for binary packages to ensure reproducibility, and is more
 #   commonly ignored for libraries.
 #   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
@@ -109,7 +109,7 @@ ipython_config.py
 #poetry.toml
 
 # pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
+#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
 #   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
 #   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
 #pdm.lock
@@ -118,7 +118,7 @@ ipython_config.py
 .pdm-build/
 
 # pixi
-#   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
+#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
 #pixi.lock
 #   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
 #   in the .venv directory. It is recommended not to include this directory in version control.
@@ -185,7 +185,7 @@ cython_debug/
 #  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
 #  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
 #  and can be added to the global gitignore or merged into this file. However, if you prefer, 
-#  you could uncomment the following to ignore the entire vscode folder
+#  you could uncomment the following to exclude the entire vscode folder
 # .vscode/
 
 # Ruff stuff:
@@ -210,3 +210,33 @@ __marimo__/
 .tejas/
 
 .claude/
+
+.env
+
+.cursorrules
+
+CLAUDE.md
+
+# Configuration files with sensitive data
+config.yaml
+*.env
+.env.local
+.env.production
+.env.staging
+
+# Database credentials and connection strings
+database.ini
+db_config.ini
+connection.ini
+
+# API keys and secrets
+secrets.yaml
+secrets.yml
+api_keys.yaml
+api_keys.yml
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
