@@ -1,14 +1,37 @@
-query_status_check:
-  description: "Check the status of database queries, particularly looking for long-running ones"
-  expected_output: "Status report of active database queries"
-  agent: database_administrator
-
 connection_info_check:
   description: "Get current database connection information and statistics"
   expected_output: "Database connection statistics and information"
   agent: database_administrator
 
-query_management:
-  description: "If there are problematic long-running queries, consider terminating them. Use your judgment."
-  expected_output: "Query management action taken or recommendation"
+
+query_status_check:
+  description: >
+    Check the status of database queries, particularly looking for long-running ones and retrieve the pid of the query
+  expected_output: "Pid of the query"
+
+  agent: database_administrator
+
+
+
+query_resolution:
+  description: >
+    If there are problematic long-running queries, consider terminating them. Use your judgment.
+    Use the tools provided to you to terminate the query.
+    If the query is not terminating, provide a recommendation to the user.
+
+    Output should be in the following format:
+    {
+      "query_status": "The status of the query",
+      "query_resolution": "The resolution of the query",
+      "query_resolution_reason": "The reason for the query resolution",
+      "query_resolution_action": "The action to be taken to resolve the query"
+    }
+
+  expected_output: >
+    The output should be a JSON object with the following fields:
+    - query_status: The status of the query
+    - query_resolution: The resolution of the query
+    - query_resolution_reason: The reason for the query resolution
+    - query_resolution_action: The action to be taken to resolve the query
+
   agent: database_administrator

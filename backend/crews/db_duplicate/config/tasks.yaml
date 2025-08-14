@@ -1,0 +1,30 @@
+ticket_analysis:
+  
+  description: >
+    Using the below ticket content, 
+    <Ticket Content>
+    {ticket_content}
+    </Ticket Content>
+    
+    Analyze ticket information to extract table names and key fields that need duplicate checking
+  
+  expected_output: "List of tables and fields identified from ticket for duplicate analysis"
+  
+  agent: duplicate_analyst
+
+duplicate_detection:
+  
+  description: "Search for duplicate records in the identified tables using SQL queries"
+  
+  expected_output: "Report of duplicate records found with specific details and counts"
+  agent: duplicate_analyst
+
+duplicate_resolution:
+  description: "Provide recommendations for resolving identified duplicates based on business rules"
+  expected_output: "Action plan and SQL recommendations for duplicate resolution"
+  agent: duplicate_analyst
+
+duplicate_resolution_execution:
+  description: "Execute the SQL recommendations for duplicate resolution"
+  expected_output: "Execution results of duplicate deletion queries"
+  agent: duplicate_analyst

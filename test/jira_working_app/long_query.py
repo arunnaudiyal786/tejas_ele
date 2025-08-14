@@ -4,11 +4,11 @@ import psycopg2
 def run_long_query():
     """Run a long running query to test monitoring"""
     conn_params = {
-        'host': os.getenv('DB_HOST', 'localhost'),
-        'port': int(os.getenv('DB_PORT', 5433)),
-        'database': os.getenv('DB_NAME', 'testdb'),
-        'user': os.getenv('DB_USER', 'postgres'),
-        'password': os.getenv('DB_PASSWORD', 'postgres')
+        'host': os.getenv('DB_HOST'),
+        'port': os.getenv('DB_PORT'),
+        'database': os.getenv('DB_NAME'),
+        'user': os.getenv('DB_USER'),
+        'password': os.getenv('DB_PASSWORD')
     }
     
     try:
@@ -42,8 +42,13 @@ def run_long_query():
         print(f"Error running long query: {e}")
 
 if __name__ == "__main__":
-    # Load environment variables from .env file
-    from dotenv import load_dotenv
-    load_dotenv()
+    # Set environment variables for standalone execution
+    os.environ.update({
+        'DB_HOST': 'localhost',
+        'DB_PORT': '5433',
+        'DB_NAME': 'testdb',
+        'DB_USER': 'testuser',
+        'DB_PASSWORD': 'testpass'
+    })
     
     run_long_query()
