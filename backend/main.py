@@ -4,6 +4,7 @@ from crewai.flow import Flow, listen, start, router , or_ , and_
 from pydantic import BaseModel
 from crews.db_agent.database_agent import DatabaseMonitoringCrew
 from crews.ticket_analyzer.ticket_analyzer import TicketAnalyzerCrew
+from crews.db_reasoning_crew.db_reasoning_crew import DatabaseComplexCrew
 
 class DatabaseState(BaseModel):
     query_pid: int = 0
@@ -45,18 +46,12 @@ class DatabaseFlow(Flow[DatabaseState]):
 
         if self.state.ticket_route == "database_crew":
             return "database_crew"
-        elif self.state.ticket_route == "duplicate_checker":
-            return "duplicate_checker"
+        elif self.state.ticket_route == "database_complex_crew":
+            return "database_complex_crew"
         else:
             return "default_handler"
         
 
-    @listen("duplicate_checker")
-    def execute_duplicate_checker(self):
-        """Execute the duplicate checker crew"""
-        print("⚡ Executing duplicate checker crew...")
-
-        return "duplicate_checker"
 
 
     
@@ -84,10 +79,35 @@ class DatabaseFlow(Flow[DatabaseState]):
             }
             raise Exception(error_msg)
         
+    @listen("database_complex_crew")
+    def execute_database_complex_crew(self):
+        """Execute the database complex crew"""
+        print("⚡ Executing database complex crew...")
+
+        try:
+            db_complex_crew = DatabaseComplexCrew().crew()
+            db_complex_crew_output = db_complex_crew.kickoff()
+            
+            self.state.crew_result = db_complex_crew_output.raw
+            self.state.status = "crew_executed"
+            
+            print("✅ Database complex crew executed successfully")
+            return f"Crew execution completed: {db_complex_crew_output.raw}"
+            
+        except Exception as e:
+            error_msg = f"Failed to execute database complex crew: {str(e)}"
+            print(f"❌ {error_msg}")
+            self.state.crew_result = {
+                'success': False,
+                'error': str(e)
+            }
+            raise Exception(error_msg)
+
+        return "database_complex_crew"
 
     
     
-    @listen(or_("duplicate_checker", "database_crew"))
+    @listen(or_("database_complex_crew", "database_crew"))
     def finalize_flow(self):
         """Finalize the database monitoring flow"""
         print("🏁 Finalizing database monitoring flow...")

@@ -10,7 +10,7 @@ ticket_analysis:
     
     Below are the routes available:
     - database_crew : It handles database related tickets such as session kill, query resolution, etc.
-    - duplicate_checker : It handles duplicate checker related tickets
+    - database_complex_crew : It handles database complex reasoning related tickets which has both data insertion , data duplicate detection and data validation tasks.
     - default_handler : It handles tickets that don't fit into any of the other categories. It is the fallback route.
 
   
