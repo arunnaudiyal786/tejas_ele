@@ -1,38 +1,79 @@
 import os
 from dotenv import load_dotenv
-from crewai.flow import Flow, listen, start
+from crewai.flow import Flow, listen, start, router , or_ , and_
 from pydantic import BaseModel
-from crews.db_agent.database_agent import create_database_monitoring_crew, execute_database_monitoring
+from crews.db_agent.database_agent import DatabaseMonitoringCrew
+from crews.ticket_analyzer.ticket_analyzer import TicketAnalyzerCrew
 
 class DatabaseState(BaseModel):
     query_pid: int = 0
     status: str = ""
     action_result: str = ""
     crew_result: dict = {}
+    ticket_route: str = ""
+    ticket_content: str = ""
 
 class DatabaseFlow(Flow[DatabaseState]):
     
     @start()
-    def initialize_monitoring(self):
+    def initialize_jira_automation_flow(self):
         """Initialize database monitoring flow"""
         print("🚀 Starting database monitoring flow...")
         return "Database monitoring initialized"
     
-    @listen(initialize_monitoring)
-    def execute_database_crew(self):
+
+    @router(initialize_jira_automation_flow)
+    def analyze_ticket(self):
+        """Analyze the ticket"""
+        print("🚀 Analyzing ticket...")
+
+        with open("initial_files/ticket_description.txt", "r") as file:
+            self.state.ticket_content = file.read()
+
+        print("\n" + "="*60)
+        print("📝 Ticket Content to Analyze:")
+        print(self.state.ticket_content.strip())
+        print("="*60 + "\n")
+
+
+        ticket_analysis_crew = TicketAnalyzerCrew().crew()
+        ticket_analysis_output = ticket_analysis_crew.kickoff(inputs={"ticket_content": self.state.ticket_content})
+
+  
+        self.state.ticket_route = ticket_analysis_output.pydantic.route_string
+        print(f"\n🌈✨ Ticket route determined: [{self.state.ticket_route}] ✨🌈\n")
+
+        if self.state.ticket_route == "database_crew":
+            return "database_crew"
+        elif self.state.ticket_route == "duplicate_checker":
+            return "duplicate_checker"
+        else:
+            return "default_handler"
+        
+
+    @listen("duplicate_checker")
+    def execute_duplicate_checker(self):
+        """Execute the duplicate checker crew"""
+        print("⚡ Executing duplicate checker crew...")
+
+        return "duplicate_checker"
+
+
+    
+    @listen("database_crew")
+    def execute_db_agent_crew(self):
         """Execute the database monitoring crew"""
         print("⚡ Executing database monitoring crew...")
         
         try:
-            # Execute the crew from database_agent.py
-            result = execute_database_monitoring()
+            db_agent_crew = DatabaseMonitoringCrew().crew()
+            db_agent_crew_output = db_agent_crew.kickoff()
             
-            # Store the crew result in state
-            self.state.crew_result = result
+            self.state.crew_result = db_agent_crew_output.raw
             self.state.status = "crew_executed"
             
             print("✅ Database monitoring crew executed successfully")
-            return f"Crew execution completed: {result['result']}"
+            return f"Crew execution completed: {db_agent_crew_output.raw}"
             
         except Exception as e:
             error_msg = f"Failed to execute database monitoring crew: {str(e)}"
@@ -42,13 +83,16 @@ class DatabaseFlow(Flow[DatabaseState]):
                 'error': str(e)
             }
             raise Exception(error_msg)
+        
+
     
-    @listen(execute_database_crew)
+    
+    @listen(or_("duplicate_checker", "database_crew"))
     def finalize_flow(self):
         """Finalize the database monitoring flow"""
         print("🏁 Finalizing database monitoring flow...")
         
-        if self.state.crew_result.get('success'):
+        if self.state.crew_result:
             self.state.action_result = "completed"
             print("✅ Flow completed successfully")
         else:

@@ -18,11 +18,17 @@ python3 -c "import psycopg2; print('Connection successful')" 2>/dev/null && echo
 # Run the main database monitoring flow
 cd backend && python main.py
 
+# Start the FastAPI server
+cd backend && python app/start_api.py
+
 # Run database monitoring crew directly
 cd backend && python -c "from crews.db_agent.database_agent import execute_database_monitoring; result = execute_database_monitoring(); print('Result:', result['result'])"
 
 # Execute a long-running test query
 cd backend && python long_query.py
+
+# Run ticket analyzer crew
+cd backend && python -c "from crews.ticket_analyzer.ticket_analyzer import execute_ticket_analysis; result = execute_ticket_analysis(); print('Result:', result)"
 ```
 
 ### Database Monitoring Commands
@@ -52,22 +58,32 @@ cur.close(); conn.close()"
 
 ### Core Components
 
-**CrewAI Flow Architecture**: The application uses CrewAI's Flow framework (`crewai.flow`) to orchestrate database monitoring tasks through a structured workflow.
+**CrewAI Flow Architecture**: The application uses CrewAI's Flow framework (`crewai.flow`) to orchestrate database monitoring and ticket analysis tasks through structured workflows.
 
 **Database Monitoring Flow** (`backend/main.py`):
 - `DatabaseFlow`: Main flow class that coordinates database monitoring operations
 - Flow stages: `initialize_monitoring` → `execute_database_crew` → `finalize_flow`
 - State management through `DatabaseState` model
 
-**CrewAI Agent System** (`backend/crews/db_agent/`):
-- Database Administrator agent with specialized tools for PostgreSQL monitoring
-- Agent configuration loaded from YAML files (`config/agents.yaml`, `config/tasks.yaml`)
-- Tools: `QueryStatusTool`, `QueryKillerTool`, `ConnectionInfoTool`
+**FastAPI Layer** (`backend/app/`):
+- `api.py`: REST API endpoints for database monitoring and ticket analysis
+- `start_api.py`: Application startup script with configurable host/port
+- API endpoints expose CrewAI functionality via HTTP interface
+
+**CrewAI Agent Systems**:
+- **Database Agent** (`backend/crews/db_agent/`): PostgreSQL monitoring and query management
+- **Database Duplicate Agent** (`backend/crews/db_duplicate/`): Duplicate detection and analysis
+- **Ticket Analyzer** (`backend/crews/ticket_analyzer/`): Ticket analysis and processing
+- Agent configurations loaded from YAML files (`config/agents.yaml`, `config/tasks.yaml`)
 
 **Database Tools** (`backend/tools/database_tools.py`):
 - Custom CrewAI tools that inherit from `BaseTool`
+- Tools: `QueryStatusTool`, `QueryKillerTool`, `ConnectionInfoTool`
 - Connection management through `DatabaseConnection` class
-- Configuration loaded from `backend/config.yaml`
+
+**Utilities** (`backend/utils/helper.py`):
+- Common helper functions and utilities
+- Shared functionality across different components
 
 ### Database Configuration
 
@@ -75,29 +91,52 @@ cur.close(); conn.close()"
 - Docker container running PostgreSQL 15
 - Host: localhost, Port: 5433 (mapped from container port 5432)
 - Database: testdb, User: postgres, Password: postgres
-- Connection parameters stored in `backend/config.yaml`
+- Initialization scripts in `database/init.sql` and `docker/postgres/init/`
 
-**Environment Variables** (from backend README):
+**Environment Variables**:
 - `DB_HOST=localhost`
 - `DB_PORT=5433`
 - `DB_NAME=testdb`
-- `DB_USER=postgres` (actual config uses 'postgres', not 'testuser')
-- `DB_PASSWORD=postgres` (actual config uses 'postgres', not 'testpass')
+- `DB_USER=postgres`
+- `DB_PASSWORD=postgres`
+- `HOST=0.0.0.0` (API server host)
+- `PORT=8000` (API server port)
+- `DEBUG=true` (development mode)
+- `LOG_LEVEL=info`
 
 ### Key Files Structure
 
+**Core Application**:
 - `backend/main.py`: Main application entry point with CrewAI Flow implementation
-- `backend/crews/db_agent/database_agent.py`: CrewAI agent and crew definitions
+- `backend/app/api.py`: FastAPI REST endpoints
+- `backend/app/start_api.py`: API server startup script
+
+**CrewAI Agents**:
+- `backend/crews/db_agent/database_agent.py`: Database monitoring agent
+- `backend/crews/db_duplicate/database_agent.py`: Duplicate detection agent
+- `backend/crews/ticket_analyzer/ticket_analyzer.py`: Ticket analysis agent
+
+**Tools and Utilities**:
 - `backend/tools/database_tools.py`: Custom database monitoring tools
-- `backend/config.yaml`: Application and database configuration
+- `backend/utils/helper.py`: Common utility functions
 - `backend/long_query.py`: Utility for creating test long-running queries
+
+**Configuration**:
 - `docker-compose.yml`: PostgreSQL database container configuration
+- `database/init.sql`: Database initialization script
+- Agent configs in `crews/*/config/` directories
 
-### Flow Execution Pattern
+### Flow Execution Patterns
 
+**Database Monitoring Flow**:
 1. **Flow Initialization**: Sets up database monitoring context
 2. **Crew Execution**: Runs database administrator agent with monitoring tasks
 3. **Task Execution**: Agent uses tools to check query status, connection info, and manage queries
 4. **Flow Finalization**: Aggregates results and updates flow state
 
-The system is designed for monitoring PostgreSQL database activity, particularly long-running queries, and provides both automated CrewAI-based monitoring and manual database inspection capabilities.
+**API Integration**:
+- REST endpoints provide HTTP access to CrewAI functionality
+- Configurable server settings via environment variables
+- Support for both development and production deployment
+
+The system is designed as a comprehensive database monitoring and ticket analysis platform, providing both automated CrewAI-based processing and manual database inspection capabilities through multiple interfaces (Flow, API, CLI).
