@@ -3,4 +3,3 @@ Users are experiencing slow response times on key operations.
 The query appears to be blocking other important processes.
 Immediate investigation is required to identify and resolve the issue.
 Please assign to the database team for prompt action.
-

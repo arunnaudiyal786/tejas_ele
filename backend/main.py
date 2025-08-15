@@ -153,7 +153,7 @@ def kickoff_database_flow() -> dict:
         return {
             'success': True,
             'flow_result': result,
-            'final_state': flow.state.dict(),
+            'final_state': flow.state.model_dump(),
             'message': 'Database monitoring flow executed successfully'
         }
         
@@ -169,6 +169,41 @@ def plot_flow():
     flow = create_database_flow()
     flow.plot("DatabaseFlowPlot")
     print("📊 Flow plot generated as DatabaseFlowPlot")
+
+def kickoff_database_flow_with_ticket(ticket_content: str) -> dict:
+    """Kickoff the database monitoring flow with custom ticket content."""
+    try:
+        # Write ticket content to file
+        with open("initial_files/ticket_description.txt", "w") as f:
+            f.write(ticket_content)
+        
+        flow = create_database_flow()
+        result = flow.kickoff()
+        
+        # Save result to session folder
+        session_id = flow.state.session_id
+        if session_id:
+            result_path = f"results/{session_id}/query_resolution.json"
+            os.makedirs(os.path.dirname(result_path), exist_ok=True)
+            
+            import json
+            with open(result_path, 'w') as f:
+                json.dump(flow.state.crew_result, f, indent=2)
+        
+        return {
+            'success': True,
+            'flow_result': result,
+            'final_state': flow.state.model_dump(),
+            'session_id': session_id,
+            'message': 'Database monitoring flow executed successfully'
+        }
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e),
+            'message': 'Database monitoring flow execution failed'
+        }
 
 def main():
     """Main entry point for the database monitoring application"""

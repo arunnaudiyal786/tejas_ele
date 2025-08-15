@@ -1,0 +1,1 @@
+"{\n  \"query_status\": \"inactive\",\n  \"query_resolution\": \"no_action\",\n  \"query_resolution_reason\": \"The query is no longer active and does not require termination.\",\n  \"query_resolution_action\": \"No action needed as the query has already completed or been terminated.\"\n}"
