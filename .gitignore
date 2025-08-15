@@ -205,7 +205,7 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
-
+.next/
 
 .tejas/
 
@@ -217,79 +217,146 @@ __marimo__/
 
 CLAUDE.md
 
-# Node.js
+# ==============================================
+# Frontend / Node.js / Next.js specific
+# ==============================================
+
+# Dependencies
+frontend/node_modules/
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.npm
-.yarn-integrity
+pnpm-debug.log*
+frontend/.next
+
+# Production builds
+frontend/.next/
+frontend/out/
+frontend/build/
+.next/
+out/
+build/
+
+# Static generation
+frontend/.output/
+.output/
+
+# Environment variables
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-.next/
-out/
-build/
-dist/
-*.tsbuildinfo
 
-# Logs
-logs
-*.log
+# Vercel deployment
+.vercel
+
+# Turbo
+.turbo
+
+# Next.js cache
+.next/
+
+# Testing
+frontend/coverage/
+frontend/.nyc_output
+coverage/
+.nyc_output
+
+# Storybook
+frontend/.storybook/build/
+frontend/storybook-static/
+
+# Editor directories and files
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# TypeScript
+frontend/*.tsbuildinfo
+frontend/.tsbuildinfo
+*.tsbuildinfo
+.tsbuildinfo
+
+# ESLint cache
+frontend/.eslintcache
+.eslintcache
+
+# Temporary folders
+frontend/tmp/
+frontend/temp/
+tmp/
+temp/
 
 # Runtime data
+frontend/pids
+frontend/*.pid
+frontend/*.seed
+frontend/*.pid.lock
 pids
 *.pid
 *.seed
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
+# Logs
+frontend/logs
+frontend/*.log
+logs
 
-# nyc test coverage
-.nyc_output
+# Lock files (uncomment if you want to ignore them)
+# frontend/package-lock.json
+# frontend/yarn.lock
+# frontend/pnpm-lock.yaml
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
 
-# Dependency directories
-jspm_packages/
+# MacOS
+.AppleDouble
+.LSOverride
+Icon
 
-# Optional npm cache directory
-.npm
+# Windows
+*.stackdump
 
-# Optional eslint cache
-.eslintcache
+# Linux
+*~
 
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
+# Runtime cache
+.cache/
+.parcel-cache/
 
-# Optional REPL history
-.node_repl_history
+# Webpack bundle analyzer
+frontend/.webpack/
+.webpack/
 
-# Output of 'npm pack'
-*.tgz
+# Cypress
+frontend/cypress/videos/
+frontend/cypress/screenshots/
+cypress/videos/
+cypress/screenshots/
 
-# Yarn Integrity file
-.yarn-integrity
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-
-# Nuxt.js build / generate output
-.nuxt
-dist
-
-# Storybook build outputs
-.out
-.storybook-out
-
-# Temporary folders
-tmp/
-temp/
+# Playwright
+frontend/test-results/
+frontend/playwright-report/
+frontend/playwright/.cache/
+test-results/
+playwright-report/
+playwright/.cache/

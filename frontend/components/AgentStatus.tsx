@@ -10,7 +10,10 @@ export default function AgentStatus() {
   const { currentSessionId, flowStages, updateStageStatus, setIsMonitoring, isMonitoring } = useStore();
 
   useEffect(() => {
-    if (!currentSessionId) return;
+    if (!currentSessionId || !isMonitoring) return;
+
+    let intervalId: NodeJS.Timeout;
+    let hasShownCompletionToast = false;
 
     const pollStatus = async () => {
       try {
@@ -32,17 +35,20 @@ export default function AgentStatus() {
           updateStageStatus('execute_crew', 'completed');
           updateStageStatus('finalize', 'completed');
           
-          // Only show toast if we're currently monitoring (prevents repeated toasts)
-          if (isMonitoring) {
+          // Only show toast once when flow completes
+          if (!hasShownCompletionToast) {
+            hasShownCompletionToast = true;
             setIsMonitoring(false);
             toast.success('Flow completed successfully!', { icon: '✅' });
+            clearInterval(intervalId);
           }
-          return; // Stop polling
+          return;
         }
         
         if (status.status === 'failed') {
           setIsMonitoring(false);
           toast.error(`Flow failed: ${status.error}`, { duration: 5000 });
+          clearInterval(intervalId);
           return;
         }
       } catch (error) {
@@ -50,11 +56,15 @@ export default function AgentStatus() {
       }
     };
 
-    const interval = setInterval(pollStatus, 2000);
+    intervalId = setInterval(pollStatus, 2000);
     pollStatus(); // Initial call
 
-    return () => clearInterval(interval);
-  }, [currentSessionId]);
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [currentSessionId, isMonitoring]);
 
   const completedStages = flowStages.filter(stage => stage.status === 'completed').length;
   const progressPercentage = (completedStages / flowStages.length) * 100;

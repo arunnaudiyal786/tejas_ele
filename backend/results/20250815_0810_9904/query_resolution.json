@@ -1,0 +1,1 @@
+"{\n  \"query_status\": \"No active long-running queries detected\",\n  \"query_resolution\": \"No action required\",\n  \"query_resolution_reason\": \"The previously identified long-running query with PID 784 is no longer active and no other problematic queries are present.\",\n  \"query_resolution_action\": \"Continue to monitor for any future long-running queries\"\n}"
