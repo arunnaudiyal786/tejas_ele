@@ -107,7 +107,7 @@ class DatabaseFlow(Flow[DatabaseState]):
 
     
     
-    @listen(or_("database_complex_crew", "database_crew"))
+    @listen(or_(execute_database_complex_crew, execute_db_agent_crew))
     def finalize_flow(self):
         """Finalize the database monitoring flow"""
         print("🏁 Finalizing database monitoring flow...")
