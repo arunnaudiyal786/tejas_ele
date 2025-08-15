@@ -1,0 +1,1 @@
+"{\n  \"query_status\": \"terminated\",\n  \"query_resolution\": \"terminated\",\n  \"query_resolution_reason\": \"The query was identified as long-running and has been successfully terminated.\",\n  \"query_resolution_action\": \"monitor for any new long-running queries\"\n}"

@@ -1,0 +1,1 @@
+"{\n  \"query_status\": \"Active\",\n  \"query_resolution\": \"Query terminated\",\n  \"query_resolution_reason\": \"Query was running longer than expected and needed termination\",\n  \"query_resolution_action\": \"Terminated the query with PID 836 to free up resources\"\n}"

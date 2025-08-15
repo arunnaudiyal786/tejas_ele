@@ -1,0 +1,1 @@
+"{\n  \"query_status\": \"terminated\",\n  \"query_resolution\": \"terminated\",\n  \"query_resolution_reason\": \"The query was running for a long time and was terminated to prevent system performance issues.\",\n  \"query_resolution_action\": \"Terminate the query if it affects system performance.\"\n}"

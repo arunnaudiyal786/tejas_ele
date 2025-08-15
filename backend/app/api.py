@@ -19,7 +19,7 @@ app = FastAPI(
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -109,7 +109,11 @@ async def get_status(session_id: str):
             completed_at="unknown"
         )
     
-    raise HTTPException(status_code=404, detail="Session not found")
+    # Return a more helpful response for missing sessions
+    raise HTTPException(
+        status_code=404, 
+        detail=f"Session '{session_id}' not found. This session may have expired or the server was restarted."
+    )
 
 @app.get("/sessions")
 async def get_sessions():

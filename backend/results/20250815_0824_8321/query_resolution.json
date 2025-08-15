@@ -1,0 +1,1 @@
+"{\n  \"query_status\": \"not found\",\n  \"query_resolution\": \"No action needed\",\n  \"query_resolution_reason\": \"The query with the specified PID is not active or has already completed\",\n  \"query_resolution_action\": \"Monitor other queries for potential issues\"\n}"

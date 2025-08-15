@@ -1,0 +1,1 @@
+"{\n  \"query_status\": \"not found\",\n  \"query_resolution\": \"unable to terminate\",\n  \"query_resolution_reason\": \"The query with PID 77 is not found among active queries\",\n  \"query_resolution_action\": \"Verify PID or check for any changes in query activity\"\n}"

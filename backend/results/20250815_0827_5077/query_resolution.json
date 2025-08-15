@@ -1,0 +1,1 @@
+"{\n  \"query_status\": \"terminated\",\n  \"query_resolution\": \"terminated\",\n  \"query_resolution_reason\": \"The query with PID 848 was terminated due to its extended runtime and potential performance impact.\",\n  \"query_resolution_action\": \"The query was terminated to maintain database performance.\"\n}"

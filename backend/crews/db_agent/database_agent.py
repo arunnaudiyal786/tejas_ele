@@ -86,5 +86,6 @@ class DatabaseMonitoringCrew:
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
-            verbose=True
+            verbose=True,
+            cache=False
         )

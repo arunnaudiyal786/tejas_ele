@@ -1,0 +1,1 @@
+"{\n  \"query_status\": \"inactive\",\n  \"query_resolution\": \"The query appears to have completed or been terminated already\",\n  \"query_resolution_reason\": \"No active query was found with the provided process ID\",\n  \"query_resolution_action\": \"No action needed unless further issues arise\"\n}"

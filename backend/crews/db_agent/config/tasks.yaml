@@ -15,10 +15,11 @@ query_status_check:
 
 query_resolution:
   description: >
-    If there are problematic long-running queries, consider terminating them. Use your judgment.
-    Use the tools provided to you to terminate the query.
+    If you find any problematic long-running queries, use the tools provided to you to terminate the query.
     If the query is not terminating, provide a recommendation to the user.
+    If the query is not found, provide a recommendation to the user.
 
+    Note: The priority is to terminate all the queries and not to provide a recommendation using the tools provided to the agent.
     Output should be in the following format:
     {
       "query_status": "The status of the query",

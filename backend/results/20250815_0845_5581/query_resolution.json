@@ -1,0 +1,1 @@
+"{\n  \"query_status\": \"terminated\",\n  \"query_resolution\": \"Query was successfully terminated\",\n  \"query_resolution_reason\": \"The query was active for a prolonged period, causing potential performance issues.\",\n  \"query_resolution_action\": \"Terminated the query with PID 79 using the query_killer tool.\"\n}"

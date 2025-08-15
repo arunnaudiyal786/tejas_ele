@@ -1,0 +1,1 @@
+"{\n  \"query_status\": \"inactive\",\n  \"query_resolution\": \"The long-running query was not found active.\",\n  \"query_resolution_reason\": \"The query with PID 880 is not currently active.\",\n  \"query_resolution_action\": \"Monitor for any new long-running queries and consider optimizing them or terminating if necessary.\"\n}"

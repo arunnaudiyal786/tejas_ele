@@ -1,0 +1,1 @@
+"{\n  \"query_status\": \"terminated\",\n  \"query_resolution\": \"Long-running query was terminated\",\n  \"query_resolution_reason\": \"Query had been running for an extended period since 2025-08-15 12:34:25.184016+00:00\",\n  \"query_resolution_action\": \"Query was terminated to free up resources and prevent further issues\"\n}"

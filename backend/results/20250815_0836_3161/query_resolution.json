@@ -1,0 +1,1 @@
+"{\n  \"query_status\": \"active\",\n  \"query_resolution\": \"monitor\",\n  \"query_resolution_reason\": \"Query is active and might be long-running\",\n  \"query_resolution_action\": \"Consider further action if query continues to run for an extended period\"\n}"

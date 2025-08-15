@@ -53,6 +53,12 @@ export default function AgentStatus() {
         }
       } catch (error) {
         console.error('Failed to poll status:', error);
+        // If we get a 404, the session doesn't exist - clear it
+        if (error instanceof Error && error.message.includes('Failed to get session status')) {
+          console.warn(`Session ${currentSessionId} not found, clearing session`);
+          setIsMonitoring(false);
+          clearInterval(intervalId);
+        }
       }
     };
 

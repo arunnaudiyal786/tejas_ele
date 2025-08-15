@@ -1,0 +1,1 @@
+"{\n  \"query_status\": \"active\",\n  \"query_resolution\": \"Investigate\",\n  \"query_resolution_reason\": \"Query has been running since 2025-08-15 and may be impacting performance\",\n  \"query_resolution_action\": \"Review query execution plan and resource usage for optimization or termination\"\n}"

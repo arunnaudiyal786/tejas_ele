@@ -66,7 +66,6 @@ class QueryStatusTool(BaseTool):
     
     class ArgsSchema(BaseModel):
         pid: Optional[int] = Field(None, description="Process ID of the query to check")
-        query_text: Optional[str] = Field(None, description="Text to search for in active queries")
         
         model_config = ConfigDict(extra='allow')  # Allow additional fields
     
@@ -76,8 +75,7 @@ class QueryStatusTool(BaseTool):
         try:
             # Extract parameters from kwargs
             pid = kwargs.get('pid')
-            query_text = kwargs.get('query_text')
-            
+                        
             db = DatabaseConnection()
             with db.get_connection() as conn:
                 with conn.cursor() as cur:
@@ -87,12 +85,7 @@ class QueryStatusTool(BaseTool):
                             FROM pg_stat_activity 
                             WHERE pid = %s
                         """, (pid,))
-                    elif query_text:
-                        cur.execute("""
-                            SELECT pid, state, query, query_start 
-                            FROM pg_stat_activity 
-                            WHERE query ILIKE %s AND state = 'active'
-                        """, (f"%{query_text}%",))
+                   
                     else:
                         # If no parameters provided, show all active queries
                         cur.execute("""
