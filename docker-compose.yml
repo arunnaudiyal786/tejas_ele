@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:15
+    container_name: tejas_postgres
     environment:
       POSTGRES_DB: testdb
       POSTGRES_USER: postgres
@@ -9,3 +10,62 @@ services:
       - "5433:5432"
     volumes:
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tejas_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d testdb"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tejas_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=testdb
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=true
+      - LOG_LEVEL=INFO
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - LLM_MODEL=gpt-4o
+      - AGENT_CHECK_INTERVAL=30
+      - AGENT_ENABLED=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - tejas_network
+    volumes:
+      - ./backend/results:/app/results
+      - ./backend/initial_files:/app/initial_files
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tejas_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - tejas_network
+
+volumes:
+  postgres_data:
+
+networks:
+  tejas_network:
+    driver: bridge

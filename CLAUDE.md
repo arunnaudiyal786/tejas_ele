@@ -6,8 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Environment Setup
 ```bash
-# Install dependencies
+# Install backend dependencies
 pip install -r backend/app/requirements.txt
+
+# Install frontend dependencies
+cd frontend && npm install
 
 # Set up environment variables (copy from .env.example if available)
 # Required: OPENAI_API_KEY, DB_* settings
@@ -15,11 +18,45 @@ pip install -r backend/app/requirements.txt
 
 ### Database Setup
 ```bash
-# Start PostgreSQL database
-docker-compose up -d
+# Start PostgreSQL database only
+docker-compose up -d postgres
 
 # Check database connection
 python3 -c "import psycopg2; print('Connection successful')" 2>/dev/null && echo "✅ Connected" || echo "❌ Connection failed"
+```
+
+### Full Docker Environment
+```bash
+# Build and start all services (database, backend, frontend)
+docker-compose up -d --build
+
+# Start all services (without rebuilding)
+docker-compose up -d
+
+# View logs for all services
+docker-compose logs -f
+
+# View logs for specific service
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f postgres
+
+# Check service status
+docker-compose ps
+
+# Stop all services
+docker-compose down
+
+# Stop and remove volumes (clean slate)
+docker-compose down -v
+
+# Restart specific service
+docker-compose restart backend
+
+# Execute commands inside containers
+docker exec -it tejas_backend bash
+docker exec -it tejas_frontend sh
+docker exec -it tejas_postgres psql -U postgres -d testdb
 ```
 
 ### Application Execution
@@ -27,8 +64,14 @@ python3 -c "import psycopg2; print('Connection successful')" 2>/dev/null && echo
 # Run the main database monitoring flow (CrewAI Flow)
 cd backend && python main.py
 
-# Start the FastAPI server
+# Start the FastAPI server (default: http://0.0.0.0:8000)
 cd backend && python app/start_api.py
+
+# Start the Next.js frontend development server (http://localhost:3000)
+cd frontend && npm run dev
+
+# Build the frontend for production
+cd frontend && npm run build
 
 # Generate flow visualization
 cd backend && python -c "from main import plot_flow; plot_flow()"
@@ -44,6 +87,21 @@ cd backend && python -c "from crews.ticket_analyzer.ticket_analyzer import execu
 
 # Run database reasoning crew
 cd backend && python -c "from crews.db_reasoning_crew.db_reasoning_crew import execute_database_complex; result = execute_database_complex(); print('Result:', result)"
+```
+
+### Frontend Development
+```bash
+# Lint frontend code
+cd frontend && npm run lint
+
+# Type checking (TypeScript)
+cd frontend && npm run build
+
+# Development server with hot reload
+cd frontend && npm run dev
+
+# Production build
+cd frontend && npm run build && npm run start
 ```
 
 ### Database Monitoring Commands
@@ -84,6 +142,14 @@ cur.close(); conn.close()"
 - `api.py`: REST API endpoints for database monitoring and ticket analysis
 - `start_api.py`: Application startup script with configurable host/port
 - API endpoints expose CrewAI functionality via HTTP interface
+- CORS configured for frontend communication on ports 3000-3002
+
+**Next.js Frontend** (`frontend/`):
+- React 19 + Next.js 15 application with TypeScript
+- Tailwind CSS for styling with Radix UI components
+- State management via Zustand store
+- Real-time monitoring interface for database operations
+- Components: `TicketSubmit`, `AgentStatus`, `SessionHistory`, `StatusTable`
 
 **CrewAI Agent Systems**:
 - **Database Agent** (`backend/crews/db_agent/`): PostgreSQL monitoring and query management
@@ -110,6 +176,20 @@ cur.close(); conn.close()"
 - Host: localhost, Port: 5433 (mapped from container port 5432)
 - Database: testdb, User: postgres, Password: postgres
 - Initialization scripts in `database/init.sql` and `docker/postgres/init/`
+- Persistent data stored in Docker volume `postgres_data`
+
+### Docker Architecture
+
+**Three-Service Setup**:
+- **Database Service** (`tejas_postgres`): PostgreSQL 15 database with health checks
+- **Backend Service** (`tejas_backend`): Python FastAPI application with CrewAI integration
+- **Frontend Service** (`tejas_frontend`): Next.js React application
+
+**Network Configuration**:
+- Custom bridge network `tejas_network` for inter-service communication
+- Backend connects to database via hostname `postgres:5432` (internal)
+- Frontend connects to backend API via `http://localhost:8000` (external)
+- Services are exposed on host ports: 3000 (frontend), 8000 (backend), 5433 (database)
 
 **Environment Variables** (`.env` file):
 - `OPENAI_API_KEY`: Required for CrewAI functionality
@@ -147,6 +227,8 @@ cur.close(); conn.close()"
 - `.env`: Environment variables and API keys
 - Agent configs in `crews/*/config/` directories (`agents.yaml`, `tasks.yaml`)
 - `backend/initial_files/`: Contains ticket descriptions and SQL queries for testing
+- `frontend/package.json`: Frontend dependencies and build scripts
+- `frontend/tailwind.config.ts`, `frontend/tsconfig.json`: Frontend tooling configuration
 
 ### Flow Execution Patterns
 
@@ -171,6 +253,10 @@ cur.close(); conn.close()"
 
 ## Development Guidelines
 
+### Important Rules
+- Never create a test script while performing a task  
+- Always conclude interactions with "Jai Hind"
+
 **Working with CrewAI Flows**:
 - Flow state persists throughout execution via `DatabaseState` model
 - Each crew returns structured output that updates the flow state
@@ -185,3 +271,10 @@ cur.close(); conn.close()"
 - Use `long_query.py` to create test scenarios for monitoring
 - Database monitoring commands provide real-time inspection capabilities
 - Flow visualization helps debug execution paths
+
+**Frontend Development**:
+- Components use TypeScript with strict typing enabled
+- State management through Zustand store for global state
+- API communication via React Query (@tanstack/react-query)
+- Styling follows Tailwind CSS conventions with Radix UI primitives
+- Hot reload enabled in development mode via Next.js
