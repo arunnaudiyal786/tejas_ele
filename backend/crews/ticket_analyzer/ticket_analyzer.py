@@ -25,10 +25,14 @@ class TicketAnalyzerCrew():
         with open(config_path, 'r') as file:
             return yaml.safe_load(file)
         
-    def __init__(self):
+    def __init__(self, session_id=None):
         self.agents_config = self._load_yaml_config('agents.yaml')
         self.tasks_config = self._load_yaml_config('tasks.yaml')
         self.llm_config = get_llm_config()
+        self.session_id = session_id
+        if self.session_id:
+            self.output_dir = f"results/{self.session_id}"
+            os.makedirs(self.output_dir, exist_ok=True)
 
 
 

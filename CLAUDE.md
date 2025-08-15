@@ -4,6 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
+### Environment Setup
+```bash
+# Install dependencies
+pip install -r backend/app/requirements.txt
+
+# Set up environment variables (copy from .env.example if available)
+# Required: OPENAI_API_KEY, DB_* settings
+```
+
 ### Database Setup
 ```bash
 # Start PostgreSQL database
@@ -15,11 +24,14 @@ python3 -c "import psycopg2; print('Connection successful')" 2>/dev/null && echo
 
 ### Application Execution
 ```bash
-# Run the main database monitoring flow
+# Run the main database monitoring flow (CrewAI Flow)
 cd backend && python main.py
 
 # Start the FastAPI server
 cd backend && python app/start_api.py
+
+# Generate flow visualization
+cd backend && python -c "from main import plot_flow; plot_flow()"
 
 # Run database monitoring crew directly
 cd backend && python -c "from crews.db_agent.database_agent import execute_database_monitoring; result = execute_database_monitoring(); print('Result:', result['result'])"
@@ -29,6 +41,9 @@ cd backend && python long_query.py
 
 # Run ticket analyzer crew
 cd backend && python -c "from crews.ticket_analyzer.ticket_analyzer import execute_ticket_analysis; result = execute_ticket_analysis(); print('Result:', result)"
+
+# Run database reasoning crew
+cd backend && python -c "from crews.db_reasoning_crew.db_reasoning_crew import execute_database_complex; result = execute_database_complex(); print('Result:', result)"
 ```
 
 ### Database Monitoring Commands
@@ -72,14 +87,17 @@ cur.close(); conn.close()"
 
 **CrewAI Agent Systems**:
 - **Database Agent** (`backend/crews/db_agent/`): PostgreSQL monitoring and query management
-- **Database Duplicate Agent** (`backend/crews/db_duplicate/`): Duplicate detection and analysis
+- **Database Duplicate Agent** (`backend/crews/db_duplicate/`): Duplicate detection and analysis  
+- **Database Reasoning Crew** (`backend/crews/db_reasoning_crew/`): Complex database analysis and reasoning
 - **Ticket Analyzer** (`backend/crews/ticket_analyzer/`): Ticket analysis and processing
-- Agent configurations loaded from YAML files (`config/agents.yaml`, `config/tasks.yaml`)
+- Agent configurations loaded from YAML files in each crew's `config/` directory (`agents.yaml`, `tasks.yaml`)
 
-**Database Tools** (`backend/tools/database_tools.py`):
-- Custom CrewAI tools that inherit from `BaseTool`
-- Tools: `QueryStatusTool`, `QueryKillerTool`, `ConnectionInfoTool`
-- Connection management through `DatabaseConnection` class
+**Database Tools**:
+- `backend/tools/database_tools.py`: Core database monitoring tools (`QueryExecutorTool`, `QueryStatusTool`, `QueryKillerTool`, `ConnectionInfoTool`)
+- `backend/tools/db_duplicate_tools.py`: Duplicate detection tools
+- `backend/tools/db_reasoning_tools.py`: Complex reasoning and analysis tools
+- All tools inherit from CrewAI's `BaseTool` class
+- Connection management through `DatabaseConnection` class in `utils/helper.py`
 
 **Utilities** (`backend/utils/helper.py`):
 - Common helper functions and utilities
@@ -93,16 +111,14 @@ cur.close(); conn.close()"
 - Database: testdb, User: postgres, Password: postgres
 - Initialization scripts in `database/init.sql` and `docker/postgres/init/`
 
-**Environment Variables**:
-- `DB_HOST=localhost`
-- `DB_PORT=5433`
-- `DB_NAME=testdb`
-- `DB_USER=postgres`
-- `DB_PASSWORD=postgres`
-- `HOST=0.0.0.0` (API server host)
-- `PORT=8000` (API server port)
-- `DEBUG=true` (development mode)
-- `LOG_LEVEL=info`
+**Environment Variables** (`.env` file):
+- `OPENAI_API_KEY`: Required for CrewAI functionality
+- `LLM_MODEL=gpt-4o`: AI model configuration
+- `DB_HOST=localhost`, `DB_PORT=5433`, `DB_NAME=testdb`: Database connection
+- `DB_USER=testuser`, `DB_PASSWORD=testpass`: Database credentials  
+- `HOST=0.0.0.0`, `PORT=8000`: API server configuration
+- `DEBUG=true`, `LOG_LEVEL=INFO`: Development settings
+- `AGENT_CHECK_INTERVAL=30`, `AGENT_ENABLED=true`: Agent behavior
 
 ### Key Files Structure
 
@@ -111,32 +127,61 @@ cur.close(); conn.close()"
 - `backend/app/api.py`: FastAPI REST endpoints
 - `backend/app/start_api.py`: API server startup script
 
-**CrewAI Agents**:
+**CrewAI Crews**:
 - `backend/crews/db_agent/database_agent.py`: Database monitoring agent
-- `backend/crews/db_duplicate/database_agent.py`: Duplicate detection agent
+- `backend/crews/db_duplicate/db_duplicate.py`: Duplicate detection agent  
+- `backend/crews/db_reasoning_crew/db_reasoning_crew.py`: Complex database reasoning crew
 - `backend/crews/ticket_analyzer/ticket_analyzer.py`: Ticket analysis agent
 
 **Tools and Utilities**:
-- `backend/tools/database_tools.py`: Custom database monitoring tools
-- `backend/utils/helper.py`: Common utility functions
+- `backend/tools/database_tools.py`: Core database monitoring tools
+- `backend/tools/db_duplicate_tools.py`: Duplicate detection tools
+- `backend/tools/db_reasoning_tools.py`: Complex reasoning tools
+- `backend/utils/helper.py`: Common utility functions and `DatabaseConnection` class
+- `backend/utils/pydantic_types.py`: Pydantic models and type definitions
 - `backend/long_query.py`: Utility for creating test long-running queries
 
 **Configuration**:
 - `docker-compose.yml`: PostgreSQL database container configuration
 - `database/init.sql`: Database initialization script
-- Agent configs in `crews/*/config/` directories
+- `.env`: Environment variables and API keys
+- Agent configs in `crews/*/config/` directories (`agents.yaml`, `tasks.yaml`)
+- `backend/initial_files/`: Contains ticket descriptions and SQL queries for testing
 
 ### Flow Execution Patterns
 
-**Database Monitoring Flow**:
-1. **Flow Initialization**: Sets up database monitoring context
-2. **Crew Execution**: Runs database administrator agent with monitoring tasks
-3. **Task Execution**: Agent uses tools to check query status, connection info, and manage queries
-4. **Flow Finalization**: Aggregates results and updates flow state
+**Ticket Analysis Flow** (`main.py`):
+1. **Flow Initialization**: `initialize_jira_automation_flow()` starts the process
+2. **Ticket Analysis**: `analyze_ticket()` reads ticket content from `initial_files/ticket_description.txt`
+3. **Routing Decision**: Based on ticket analysis, routes to either:
+   - `database_crew` → `execute_db_agent_crew()` for standard database monitoring
+   - `database_complex_crew` → `execute_database_complex_crew()` for complex analysis
+4. **Flow Finalization**: `finalize_flow()` aggregates results and updates state
+
+**CrewAI Flow Architecture**:
+- Uses `crewai.flow` with decorators: `@start()`, `@router()`, `@listen()`
+- State management through `DatabaseState` Pydantic model
+- Flow routing based on ticket content analysis results
+- Conditional execution paths using `or_()` and `and_()` operators
 
 **API Integration**:
-- REST endpoints provide HTTP access to CrewAI functionality
-- Configurable server settings via environment variables
-- Support for both development and production deployment
+- FastAPI server (`backend/app/start_api.py`) exposes CrewAI functionality via REST endpoints
+- Configurable host/port settings via environment variables
+- Development mode with debug logging enabled
 
-The system is designed as a comprehensive database monitoring and ticket analysis platform, providing both automated CrewAI-based processing and manual database inspection capabilities through multiple interfaces (Flow, API, CLI).
+## Development Guidelines
+
+**Working with CrewAI Flows**:
+- Flow state persists throughout execution via `DatabaseState` model
+- Each crew returns structured output that updates the flow state
+- Use `flow.plot()` to visualize flow execution patterns
+
+**Database Connection Pattern**:
+- All database operations use `DatabaseConnection` context manager from `utils/helper.py`
+- Connection parameters configured via environment variables
+- Tools inherit from `BaseTool` with standardized error handling
+
+**Testing Database Operations**:
+- Use `long_query.py` to create test scenarios for monitoring
+- Database monitoring commands provide real-time inspection capabilities
+- Flow visualization helps debug execution paths

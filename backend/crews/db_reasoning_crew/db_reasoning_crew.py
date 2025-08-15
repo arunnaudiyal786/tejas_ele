@@ -41,10 +41,14 @@ class DatabaseComplexCrew:
         with open(config_path, 'r') as file:
             return yaml.safe_load(file)
         
-    def __init__(self):
+    def __init__(self, session_id=None):
         self.agents_config = self._load_yaml_config('agents.yaml')
         self.tasks_config = self._load_yaml_config('tasks.yaml')
         self.llm_config = get_llm_config()
+        self.session_id = session_id
+        if self.session_id:
+            self.output_dir = f"results/{self.session_id}"
+            os.makedirs(self.output_dir, exist_ok=True)
         from crewai_tools import NL2SQLTool
 
         # psycopg2 was installed to run this example with PostgreSQL
@@ -175,12 +179,15 @@ class DatabaseComplexCrew:
             # self.duplicate_cleanup_task(),
             # self.data_validation_task()
         ]
+        
+        output_file = os.path.join(self.output_dir, "orchestration_results.json") if self.session_id else "orchestration_results.json"
+        
         return Task(
             config=self.tasks_config['orchestration_task'],
             agent=self.db_report_generator_agent(),
             context=context,
             output_pydantic=OrchestrationOutput,
-            output_file=os.path.join("orchestration_results.json")
+            output_file=output_file
         )
     
     @crew

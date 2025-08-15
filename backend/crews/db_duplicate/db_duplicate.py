@@ -3,6 +3,7 @@ import sys
 from crewai import Agent, Task, Crew
 from crewai.project import CrewBase, agent, task, crew
 from dotenv import load_dotenv
+import yaml
 
 # Add the backend directory to the Python path to access tools
 backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -12,10 +13,26 @@ sys.path.append(backend_dir)
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), '.env'))
 
 from tools.db_duplicate_tools import DBDuplicateCheckerTicketParserTool, DBDuplicateCheckerDuplicateDetectorTool, DBDuplicateQueryExecutor
+from utils.helper import get_llm_config
 
 @CrewBase
 class DuplicateAnalysisCrew:
     """Crew for analyzing tickets and detecting database duplicates"""
+    
+    def _load_yaml_config(self, file_name: str):
+        """Load the config from the given path"""
+        config_path = os.path.join(os.path.dirname(__file__), 'config', file_name)
+        with open(config_path, 'r') as file:
+            return yaml.safe_load(file)
+        
+    def __init__(self, session_id=None):
+        self.agents_config = self._load_yaml_config('agents.yaml')
+        self.tasks_config = self._load_yaml_config('tasks.yaml')
+        self.llm_config = get_llm_config()
+        self.session_id = session_id
+        if self.session_id:
+            self.output_dir = f"results/{self.session_id}"
+            os.makedirs(self.output_dir, exist_ok=True)
     
     @agent
     def duplicate_analyst(self) -> Agent:
@@ -23,6 +40,7 @@ class DuplicateAnalysisCrew:
         return Agent(
             config=self.agents_config['duplicate_analyst'],
             tools=[DBDuplicateCheckerTicketParserTool(), DBDuplicateCheckerDuplicateDetectorTool(), DBDuplicateQueryExecutor()],
+            llm=self.llm_config,
             verbose=True
         )
 
@@ -67,9 +85,9 @@ class DuplicateAnalysisCrew:
             verbose=True
         )
 
-def execute_duplicate_analysis(ticket_content: str = "Analyze duplicates in users table by email field") -> dict:
+def execute_duplicate_analysis(ticket_content: str = "Analyze duplicates in users table by email field", session_id: str = None) -> dict:
     """Execute the duplicate analysis crew and return results"""
-    crew_instance = DuplicateAnalysisCrew()
+    crew_instance = DuplicateAnalysisCrew(session_id=session_id)
     
     inputs = {'ticket_content': ticket_content}
     result = crew_instance.crew().kickoff(inputs=inputs)

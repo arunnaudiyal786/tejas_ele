@@ -1,0 +1,1 @@
+{"query_status":"active","query_resolution":"monitor","query_resolution_reason":"The query has been running since 2025-08-15 09:43:18.563284+00:00, which indicates it might be a long-running query.","query_resolution_action":"Monitor the query closely and consider optimizing or terminating if it impacts performance."}

@@ -1,10 +1,25 @@
 import os
+import datetime
+import random
 from dotenv import load_dotenv
 from crewai.flow import Flow, listen, start, router , or_ , and_
 from pydantic import BaseModel
 from crews.db_agent.database_agent import DatabaseMonitoringCrew
 from crews.ticket_analyzer.ticket_analyzer import TicketAnalyzerCrew
 from crews.db_reasoning_crew.db_reasoning_crew import DatabaseComplexCrew
+
+def generate_session_id():
+    """Generate session_id in format: date_time_tillminutes_4_digit_random"""
+    now = datetime.datetime.now()
+    date_time = now.strftime("%Y%m%d_%H%M")
+    random_num = random.randint(1000, 9999)
+    return f"{date_time}_{random_num}"
+
+def create_output_folder(session_id):
+    """Create output folder for the session"""
+    output_dir = f"results/{session_id}"
+    os.makedirs(output_dir, exist_ok=True)
+    return output_dir
 
 class DatabaseState(BaseModel):
     query_pid: int = 0
@@ -13,6 +28,7 @@ class DatabaseState(BaseModel):
     crew_result: dict = {}
     ticket_route: str = ""
     ticket_content: str = ""
+    session_id: str = ""
 
 class DatabaseFlow(Flow[DatabaseState]):
     
@@ -20,6 +36,9 @@ class DatabaseFlow(Flow[DatabaseState]):
     def initialize_jira_automation_flow(self):
         """Initialize database monitoring flow"""
         print("🚀 Starting database monitoring flow...")
+        self.state.session_id = generate_session_id()
+        create_output_folder(self.state.session_id)
+        print(f"📁 Session ID: {self.state.session_id}")
         return "Database monitoring initialized"
     
 
@@ -37,7 +56,7 @@ class DatabaseFlow(Flow[DatabaseState]):
         print("="*60 + "\n")
 
 
-        ticket_analysis_crew = TicketAnalyzerCrew().crew()
+        ticket_analysis_crew = TicketAnalyzerCrew(session_id=self.state.session_id).crew()
         ticket_analysis_output = ticket_analysis_crew.kickoff(inputs={"ticket_content": self.state.ticket_content})
 
   
@@ -61,7 +80,7 @@ class DatabaseFlow(Flow[DatabaseState]):
         print("⚡ Executing database monitoring crew...")
         
         try:
-            db_agent_crew = DatabaseMonitoringCrew().crew()
+            db_agent_crew = DatabaseMonitoringCrew(session_id=self.state.session_id).crew()
             db_agent_crew_output = db_agent_crew.kickoff()
             
             self.state.crew_result = db_agent_crew_output.raw
@@ -85,7 +104,7 @@ class DatabaseFlow(Flow[DatabaseState]):
         print("⚡ Executing database complex crew...")
 
         try:
-            db_complex_crew = DatabaseComplexCrew().crew()
+            db_complex_crew = DatabaseComplexCrew(session_id=self.state.session_id).crew()
             db_complex_crew_output = db_complex_crew.kickoff()
             
             self.state.crew_result = db_complex_crew_output.raw
