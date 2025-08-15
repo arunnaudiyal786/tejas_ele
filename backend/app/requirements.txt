@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+crewai[tools]
+psycopg2-binary
+python-dotenv
+pydantic
+pyyaml

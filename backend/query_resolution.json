@@ -1,0 +1,6 @@
+{
+    "query_status": "terminated",
+    "query_resolution": "terminated",
+    "query_resolution_reason": "Long-running query detected and terminated successfully",
+    "query_resolution_action": "Query terminated to free up resources"
+}

@@ -1,0 +1,20 @@
+ticket_analysis:
+  
+  description: >
+    Analyze the provided ticket content to determine the ticket type, priority level, appropriate team assignment, estimated resolution time, required skills, and provide actionable recommendations for resolution.
+    Provide me a single route identifier (word/phrase) that matches one of the available handlers, or 'default_handler' if no specific match is found.
+    
+    <ticket_content>
+    {ticket_content}
+    </ticket_content>
+    
+    Below are the routes available:
+    - database_crew : It handles database related tickets such as session kill, query resolution, etc.
+    - database_complex_crew : It handles database complex reasoning related tickets which has both data insertion , data duplicate detection and data validation tasks.
+    - default_handler : It handles tickets that don't fit into any of the other categories. It is the fallback route.
+
+  
+  expected_output: >
+    A single route identifier (word/phrase) that matches one of the available handlers, or 'default_handler' if no specific match is found.
+
+  agent: ticket_analyzer
