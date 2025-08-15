@@ -1,0 +1,140 @@
+# planning_task:
+#   description: >
+#     Based on the below ticket content, plan the database operations to be performed.  
+#     <ticket_content>
+#     {ticket_content}
+#     </ticket_content>
+#     Create the necessary steps and delegate the tasks to agents that are required to complete the ticket.
+
+
+
+#   expected_output: "A detailed plan of the database operations to be performed. This plan will be used by the manager agent to execute the database operations."
+#   agent: manager_agent
+
+
+member_insertion_task:
+  description: >
+    Use the below ticket content for your reference and perform necessary database operations to complete the ticket.
+    
+    Ensure all required fields are populated and foreign key relationships are maintained with existing products and providers. 
+
+    <ticket_content>
+    {ticket_content}
+    </ticket_content>
+
+    
+    As output, create a syntactically correct SQL query that can be run on a PostgreSQL server.
+
+    Think step by step and follow below :
+    2. Search only the table schena: (table_name and use the columns to answer the question:
+    3. Generate and execute a SQL query to insert the data into the member_enrollment table in the database using NL2SQLTool till you get the results from the database.
+    4. Evaluate the response and if the response doesnt answer the question then display the message "Due to overload of LLM calls on the OpenAI API, the response is not available.
+
+    Note:
+    - Use NL2SQLTool correctly by passing the input as I'sql_query': «your_query»)
+    - Make sure when you are referring to a column then use table_name. "column_name".
+    - When there is no results retrieved by running the query, retry the SOL query with the "ilike" operator along with "g" before and after the search string in the where clause.
+    - Continue modifying the SQL query until you get a response from the database.
+  
+  expected_output: "A syntactically correct and working SQL query."
+
+provider_insertion_task:
+  description: >
+    Use the below ticket content for your reference and perform necessary database operations to complete the ticket.
+    
+    Ensure all required fields are populated and foreign key relationships are maintained with existing products. 
+
+    <ticket_content>
+    {ticket_content}
+    </ticket_content>
+
+    As output, create a syntactically correct SQL query that can be run on a PostgreSQL server.
+    Think step by step and follow below :
+    1. Interpret the ticket mentioned above and plan and execute the necessary database operations.
+    2. Search only the table schena: table_name and use the columns to answer the question
+    3. Generate and execute a SQL query to insert the data into the provider_network table in the database using NL2SQLTool till you get the results from the database.
+
+    Note:
+    - Use NL2SQLTool correctly by passing the input as I'sql_query': «your_query»)
+    - Make sure when you are referring to a column then use table_name. "column_name".
+    - Continue modifying the SQL query until you get a response from the database.
+  
+  expected_output: "A syntactically correct and working SQL query."
+
+# duplicate_detection_task:
+#   description: >
+#     Use the below ticket content for your reference and perform necessary database operations to complete the ticket.
+
+    
+#     Identify duplicate member enrollment records where members may have been enrolled multiple times with different member IDs but same personal information (first_name, last_name, date_of_birth). 
+#     Analyze the member_enrollment table for potential duplicates. 
+
+#     <ticket_content>
+#     {ticket_content}
+#     </ticket_content>
+
+#     Think step by step and follow below :
+#     1. Interpret the ticket mentioned above and plan and execute the necessary database operations.
+#     2. Search only the table schena: (table_name and use the columns to answer the question:
+#     3. Generate and execute a SQL query to delete the data from the member_enrollment table in the database using NL2SQLTool till you get the results from the database.
+
+#     Note:
+#     - Use NL2SQLTool correctly by passing the input as I'sql_query': «your_query»)
+#     - Make sure when you are referring to a column then use table_name. "column_name".
+#     - Continue modifying the SQL query until you get a response from the database.
+#     As output, create a syntactically correct SQL query that can be run on a PostgreSQL server.
+
+
+  
+#   expected_output: "A syntactically correct and working SQL query."
+
+# duplicate_cleanup_task:
+#   description: >
+#     Use the below ticket content for your reference and perform necessary database operations to complete the ticket.
+    
+#     Remove identified duplicate member enrollment records while preserving the original enrollment record (keeping the one with the earliest enrollment_date). 
+#     Ensure no orphaned records are created in related tables. 
+
+#     <ticket_content>
+#     {ticket_content}
+#     </ticket_content>
+
+#     Think step by step and follow below :
+#     1. Interpret the ticket mentioned above and plan and execute the necessary database operations.
+#     2. Search only the table schena: (table_name and use the columns to answer the question:
+#     3. Generate and execute a SQL query to retrieve the data from the database using NL2SQLTool till you get the results from the database.
+
+#     Note:
+#     - Use NL2SQLTool correctly by passing the input as I'sql_query': «your_query»)
+#     - Make sure when you are referring to a column then use table_name. "column_name".
+#     - Continue modifying the SQL query until you get a response from the database.
+#     As output, create a syntactically correct SQL query that can be run on a PostgreSQL server.
+    
+  
+#   expected_output: "A syntactically correct and working SQL query."
+
+data_validation_task:
+  description: >
+    Perform comprehensive data validation after all insertion and cleanup operations. 
+    Verify referential integrity, check for any remaining duplicates, and ensure all business rules are satisfied. 
+
+    Think step by step and follow below :
+    1. Interpret the ticket mentioned above and plan and execute the necessary database operations.
+    2. Search only the table schena: (table_name and use the columns to answer the question)
+    3. Generate and execute a SQL query to retrieve the data from the database using NL2SQLTool till you get the results from the database.
+
+    Note:
+    - Use NL2SQLTool correctly by passing the input as I'sql_query': «your_query»)
+    - Make sure when you are referring to a column then use table_name. "column_name".
+    - When there is no results retrieved by running the query, retry the SOL query with the "ilike" operator along with "g" before and after the search string in the where clause.
+    - Continue modifying the SQL query until you get a response from the database.
+    As output, create a syntactically correct SQL query that can be run on a PostgreSQL server.
+  
+  expected_output: "A syntactically correct and working SQL query."
+
+orchestration_task:
+  description: >
+    Check all the output from the previous tasks and provide a detailed plan of the database operations that were performed. 
+    Create a report that will tell in detail what tasks were performed and why they were performed.
+  
+  expected_output: "Provide a detailed plan of the database operations that were performed."

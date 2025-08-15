@@ -1,0 +1,191 @@
+-- Database Initialization Script (init.sql) - Updated for Complex Reasoning Scenario
+
+-- Create user if not exists
+DO
+$do$
+BEGIN
+   IF NOT EXISTS (
+      SELECT FROM pg_catalog.pg_roles
+      WHERE  rolname = 'testuser') THEN
+      CREATE ROLE testuser LOGIN PASSWORD 'testpass';
+   END IF;
+END
+$do$;
+
+-- Create database if not exists
+SELECT 'CREATE DATABASE testdb' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'testdb')\gexec
+
+-- Grant privileges
+GRANT ALL PRIVILEGES ON DATABASE testdb TO testuser;
+GRANT ALL PRIVILEGES ON SCHEMA public TO testuser;
+
+-- Connect to testdb and create table
+\c testdb;
+
+CREATE TABLE IF NOT EXISTS long_running_table (
+    id SERIAL PRIMARY KEY,
+    data TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Grant table permissions
+GRANT ALL PRIVILEGES ON long_running_table TO testuser;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO testuser;
+
+-- Create member_enrollment table
+CREATE TABLE member_enrollment (
+    member_id VARCHAR(20) PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    date_of_birth DATE NOT NULL,
+    enrollment_date DATE NOT NULL,
+    plan_code VARCHAR(10) NOT NULL,
+    product_code VARCHAR(15) NOT NULL,
+    status VARCHAR(20) DEFAULT 'ACTIVE',
+    primary_care_provider_id VARCHAR(20),
+    coverage_effective_date DATE NOT NULL,
+    coverage_termination_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert original 100 sample records + some duplicates for testing
+INSERT INTO member_enrollment VALUES
+('MEM001', 'John', 'Smith', '1985-03-15', '2024-01-01', 'PLAN001', 'PROD_HMO_001', 'ACTIVE', 'PCP001', '2024-01-01', NULL, NOW(), NOW()),
+('MEM002', 'Sarah', 'Johnson', '1990-07-22', '2024-01-15', 'PLAN002', 'PROD_PPO_001', 'ACTIVE', 'PCP002', '2024-02-01', NULL, NOW(), NOW()),
+('MEM003', 'Michael', 'Williams', '1978-11-08', '2024-02-01', 'PLAN001', 'PROD_HMO_002', 'ACTIVE', 'PCP003', '2024-02-01', NULL, NOW(), NOW()),
+('MEM004', 'Emma', 'Brown', '1995-05-30', '2024-02-15', 'PLAN003', 'PROD_EPO_001', 'ACTIVE', 'PCP004', '2024-03-01', NULL, NOW(), NOW()),
+('MEM005', 'Robert', 'Davis', '1982-09-12', '2024-03-01', 'PLAN002', 'PROD_PPO_002', 'ACTIVE', 'PCP005', '2024-03-01', NULL, NOW(), NOW()),
+('MEM006', 'Lisa', 'Miller', '1988-01-25', '2024-03-15', 'PLAN001', 'PROD_HMO_001', 'ACTIVE', 'PCP006', '2024-04-01', NULL, NOW(), NOW()),
+('MEM007', 'James', 'Wilson', '1975-06-18', '2024-04-01', 'PLAN004', 'PROD_POS_001', 'ACTIVE', 'PCP007', '2024-04-01', NULL, NOW(), NOW()),
+('MEM008', 'Jennifer', 'Moore', '1992-10-03', '2024-04-15', 'PLAN002', 'PROD_PPO_001', 'ACTIVE', 'PCP008', '2024-05-01', NULL, NOW(), NOW()),
+('MEM009', 'David', 'Taylor', '1980-12-27', '2024-05-01', 'PLAN003', 'PROD_EPO_002', 'ACTIVE', 'PCP009', '2024-05-01', NULL, NOW(), NOW()),
+('MEM010', 'Patricia', 'Anderson', '1987-04-09', '2024-05-15', 'PLAN001', 'PROD_HMO_002', 'ACTIVE', 'PCP010', '2024-06-01', NULL, NOW(), NOW()),
+-- Add duplicate records to simulate data quality issues
+('MEM101', 'John', 'Smith', '1985-03-15', '2024-01-02', 'PLAN002', 'PROD_PPO_001', 'ACTIVE', 'PCP011', '2024-01-02', NULL, NOW(), NOW()), -- Duplicate of MEM001
+('MEM102', 'Sarah', 'Johnson', '1990-07-22', '2024-01-16', 'PLAN003', 'PROD_EPO_001', 'ACTIVE', 'PCP012', '2024-02-02', NULL, NOW(), NOW()), -- Duplicate of MEM002
+('MEM103', 'Michael', 'Williams', '1978-11-08', '2024-02-02', 'PLAN002', 'PROD_PPO_002', 'ACTIVE', 'PCP013', '2024-02-02', NULL, NOW(), NOW()); -- Duplicate of MEM003
+
+-- Create product_catalog table
+CREATE TABLE product_catalog (
+    product_code VARCHAR(15) PRIMARY KEY,
+    product_name VARCHAR(100) NOT NULL,
+    product_type VARCHAR(50) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    subcategory VARCHAR(50),
+    network_type VARCHAR(30),
+    copay_amount DECIMAL(10,2),
+    deductible_amount DECIMAL(10,2),
+    out_of_pocket_max DECIMAL(10,2),
+    coinsurance_percentage INT,
+    prescription_coverage BOOLEAN DEFAULT TRUE,
+    dental_coverage BOOLEAN DEFAULT FALSE,
+    vision_coverage BOOLEAN DEFAULT FALSE,
+    mental_health_coverage BOOLEAN DEFAULT TRUE,
+    effective_date DATE NOT NULL,
+    termination_date DATE,
+    state_availability VARCHAR(500),
+    age_restrictions VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert product catalog records
+INSERT INTO product_catalog VALUES
+('PROD_HMO_001', 'Essential HMO Plan', 'HMO', 'Medical', 'Individual', 'In-Network Only', 25.00, 1500.00, 8000.00, 20, TRUE, FALSE, FALSE, TRUE, '2024-01-01', NULL, 'CA,NY,TX,FL', 'None', NOW(), NOW()),
+('PROD_PPO_001', 'Premium PPO Plan', 'PPO', 'Medical', 'Family', 'In/Out Network', 35.00, 2000.00, 12000.00, 30, TRUE, TRUE, TRUE, TRUE, '2024-01-01', NULL, 'All States', 'None', NOW(), NOW()),
+('PROD_HMO_002', 'Basic HMO Plan', 'HMO', 'Medical', 'Individual', 'In-Network Only', 30.00, 2500.00, 10000.00, 25, TRUE, FALSE, FALSE, TRUE, '2024-01-01', NULL, 'CA,OR,WA', '18-65', NOW(), NOW()),
+('PROD_EPO_001', 'Exclusive Provider Org', 'EPO', 'Medical', 'Family', 'Exclusive Network', 20.00, 1000.00, 7500.00, 15, TRUE, FALSE, TRUE, TRUE, '2024-01-01', NULL, 'CA,NV,AZ', 'None', NOW(), NOW()),
+('PROD_PPO_002', 'Standard PPO Plan', 'PPO', 'Medical', 'Individual', 'In/Out Network', 40.00, 3000.00, 15000.00, 35, TRUE, FALSE, FALSE, TRUE, '2024-01-01', NULL, 'All States', 'None', NOW(), NOW()),
+('PROD_POS_001', 'Point of Service Plan', 'POS', 'Medical', 'Family', 'Hybrid Network', 30.00, 2000.00, 10000.00, 25, TRUE, TRUE, FALSE, TRUE, '2024-01-01', NULL, 'East Coast', 'None', NOW(), NOW()),
+('PROD_HMO_003', 'Advantage HMO Plan', 'HMO', 'Medicare', 'Senior', 'In-Network Only', 15.00, 500.00, 5000.00, 10, TRUE, TRUE, TRUE, TRUE, '2024-01-01', NULL, 'FL,AZ,TX', '65+', NOW(), NOW()),
+('PROD_PPO_003', 'Elite PPO Plan', 'PPO', 'Medical', 'Executive', 'Global Network', 10.00, 0.00, 5000.00, 10, TRUE, TRUE, TRUE, TRUE, '2024-01-01', NULL, 'All States', 'None', NOW(), NOW()),
+('PROD_EPO_002', 'Budget EPO Plan', 'EPO', 'Medical', 'Individual', 'Exclusive Network', 45.00, 5000.00, 20000.00, 40, TRUE, FALSE, FALSE, FALSE, '2024-01-01', NULL, 'CA,TX', '21-64', NOW(), NOW()),
+('PROD_DENTAL_001', 'Comprehensive Dental', 'DENTAL', 'Dental', 'Family', 'PPO Network', 0.00, 50.00, 2000.00, 20, FALSE, TRUE, FALSE, FALSE, '2024-01-01', NULL, 'All States', 'None', NOW(), NOW());
+
+-- Create provider_network table
+CREATE TABLE provider_network (
+    provider_id VARCHAR(20) PRIMARY KEY,
+    npi_number VARCHAR(10) UNIQUE NOT NULL,
+    provider_name VARCHAR(100) NOT NULL,
+    provider_type VARCHAR(50) NOT NULL,
+    specialty VARCHAR(100),
+    product_code VARCHAR(15) NOT NULL,
+    network_tier VARCHAR(20),
+    address_line1 VARCHAR(100),
+    address_line2 VARCHAR(100),
+    city VARCHAR(50),
+    state VARCHAR(2),
+    zip_code VARCHAR(10),
+    phone_number VARCHAR(20),
+    fax_number VARCHAR(20),
+    email VARCHAR(100),
+    accepting_new_patients BOOLEAN DEFAULT TRUE,
+    languages_spoken VARCHAR(200),
+    hospital_affiliations VARCHAR(500),
+    board_certifications VARCHAR(500),
+    contract_start_date DATE NOT NULL,
+    contract_end_date DATE,
+    quality_rating DECIMAL(2,1),
+    patient_volume INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_code) REFERENCES product_catalog(product_code)
+);
+
+-- Insert provider network records
+INSERT INTO provider_network VALUES
+('PCP001', '1234567890', 'Dr. Robert Johnson', 'Primary Care', 'Family Medicine', 'PROD_HMO_001', 'Tier 1', '100 Medical Plaza', 'Suite 200', 'Los Angeles', 'CA', '90001', '213-555-0100', '213-555-0101', 'rjohnson@medical.com', TRUE, 'English,Spanish', 'Cedar Sinai,UCLA Medical', 'ABFM', '2024-01-01', NULL, 4.8, 1500, NOW(), NOW()),
+('PCP002', '1234567891', 'Dr. Maria Garcia', 'Primary Care', 'Internal Medicine', 'PROD_PPO_001', 'Tier 1', '200 Health Center', NULL, 'New York', 'NY', '10001', '212-555-0200', '212-555-0201', 'mgarcia@health.com', TRUE, 'English,Spanish,Portuguese', 'Mount Sinai,NYU', 'ABIM', '2024-01-01', NULL, 4.9, 2000, NOW(), NOW()),
+('PCP003', '1234567892', 'Dr. James Lee', 'Specialist', 'Cardiology', 'PROD_HMO_002', 'Tier 2', '300 Heart Institute', 'Building A', 'San Francisco', 'CA', '94101', '415-555-0300', '415-555-0301', 'jlee@heartcare.com', FALSE, 'English,Mandarin', 'UCSF Medical', 'ABIM-Cardiology', '2024-01-01', NULL, 4.7, 1200, NOW(), NOW()),
+('PCP004', '1234567893', 'Dr. Emily White', 'Primary Care', 'Pediatrics', 'PROD_EPO_001', 'Tier 1', '400 Children Hospital', NULL, 'Chicago', 'IL', '60601', '312-555-0400', '312-555-0401', 'ewhite@kidcare.com', TRUE, 'English', 'Lurie Children Hospital', 'ABP', '2024-01-01', NULL, 4.9, 1800, NOW(), NOW()),
+('PCP005', '1234567894', 'Dr. Michael Brown', 'Specialist', 'Orthopedics', 'PROD_PPO_002', 'Tier 2', '500 Bone & Joint', 'Floor 3', 'Houston', 'TX', '77001', '713-555-0500', '713-555-0501', 'mbrown@ortho.com', TRUE, 'English,Spanish', 'Methodist,Memorial Hermann', 'ABOS', '2024-01-01', NULL, 4.6, 900, NOW(), NOW()),
+('PCP006', '1234567895', 'Dr. Lisa Miller', 'Primary Care', 'Family Medicine', 'PROD_HMO_001', 'Tier 1', '600 Family Care', NULL, 'Phoenix', 'AZ', '85001', '602-555-0600', '602-555-0601', 'lmiller@familycare.com', TRUE, 'English,Spanish', 'Banner Health', 'ABFM', '2024-01-01', NULL, 4.7, 1600, NOW(), NOW()),
+('PCP007', '1234567896', 'Dr. James Wilson', 'Specialist', 'Neurology', 'PROD_POS_001', 'Tier 1', '700 Neuro Center', 'Suite 100', 'Miami', 'FL', '33101', '305-555-0700', '305-555-0701', 'jwilson@neuro.com', TRUE, 'English,Spanish', 'Jackson Memorial', 'ABN', '2024-01-01', NULL, 4.8, 1100, NOW(), NOW()),
+('PCP008', '1234567897', 'Dr. Jennifer Moore', 'Primary Care', 'Internal Medicine', 'PROD_PPO_001', 'Tier 1', '800 Internal Med', NULL, 'Dallas', 'TX', '75001', '214-555-0800', '214-555-0801', 'jmoore@internal.com', TRUE, 'English', 'Baylor Scott', 'ABIM', '2024-01-01', NULL, 4.6, 1700, NOW(), NOW()),
+('PCP009', '1234567898', 'Dr. David Taylor', 'Specialist', 'Cardiology', 'PROD_EPO_002', 'Tier 2', '900 Heart Care', 'Floor 2', 'Atlanta', 'GA', '30301', '404-555-0900', '404-555-0901', 'dtaylor@heart.com', FALSE, 'English', 'Emory Healthcare', 'ABIM-Cardiology', '2024-01-01', NULL, 4.9, 1300, NOW(), NOW()),
+('PCP010', '1234567899', 'Dr. Patricia Anderson', 'Primary Care', 'Pediatrics', 'PROD_HMO_002', 'Tier 1', '1000 Kids Health', NULL, 'Denver', 'CO', '80201', '303-555-1000', '303-555-1001', 'panderson@kids.com', TRUE, 'English,Spanish', 'Children Hospital Colorado', 'ABP', '2024-01-01', NULL, 4.8, 1400, NOW(), NOW());
+
+-- Create claims_authorization table
+CREATE TABLE claims_authorization (
+    authorization_id VARCHAR(20) PRIMARY KEY,
+    claim_id VARCHAR(20) UNIQUE,
+    member_id VARCHAR(20) NOT NULL,
+    provider_id VARCHAR(20) NOT NULL,
+    product_code VARCHAR(15) NOT NULL,
+    service_date DATE NOT NULL,
+    service_type VARCHAR(50) NOT NULL,
+    procedure_code VARCHAR(10),
+    diagnosis_code VARCHAR(10),
+    authorization_status VARCHAR(20) DEFAULT 'PENDING',
+    authorization_date DATE,
+    expiration_date DATE,
+    authorized_units INT,
+    used_units INT DEFAULT 0,
+    requested_amount DECIMAL(10,2),
+    approved_amount DECIMAL(10,2),
+    denied_reason VARCHAR(500),
+    appeal_status VARCHAR(20),
+    notes TEXT,
+    created_by VARCHAR(50),
+    approved_by VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (member_id) REFERENCES member_enrollment(member_id),
+    FOREIGN KEY (provider_id) REFERENCES provider_network(provider_id),
+    FOREIGN KEY (product_code) REFERENCES product_catalog(product_code)
+);
+
+-- Insert sample authorizations
+INSERT INTO claims_authorization VALUES
+('AUTH001', 'CLM001', 'MEM001', 'PCP001', 'PROD_HMO_001', '2024-01-15', 'Office Visit', '99213', 'J45.909', 'APPROVED', '2024-01-14', '2024-07-14', 6, 1, 150.00, 150.00, NULL, NULL, 'Routine checkup', 'SYSTEM', 'AUTO', NOW(), NOW()),
+('AUTH002', 'CLM002', 'MEM002', 'PCP002', 'PROD_PPO_001', '2024-01-20', 'Lab Work', '80053', 'R73.09', 'APPROVED', '2024-01-19', '2024-02-19', 1, 1, 250.00, 250.00, NULL, NULL, 'Annual blood work', 'SYSTEM', 'AUTO', NOW(), NOW()),
+('AUTH003', 'CLM003', 'MEM003', 'PCP003', 'PROD_HMO_002', '2024-02-01', 'Cardiology Consult', '99244', 'I10', 'PENDING', NULL, NULL, 1, 0, 500.00, NULL, NULL, NULL, 'Specialist referral needed', 'SYSTEM', NULL, NOW(), NOW()),
+('AUTH004', 'CLM004', 'MEM004', 'PCP004', 'PROD_EPO_001', '2024-02-10', 'Immunization', '90471', 'Z23', 'APPROVED', '2024-02-09', '2024-02-10', 1, 1, 50.00, 50.00, NULL, NULL, 'Flu shot', 'SYSTEM', 'AUTO', NOW(), NOW()),
+('AUTH005', 'CLM005', 'MEM005', 'PCP005', 'PROD_PPO_002', '2024-02-15', 'MRI Scan', '70553', 'M51.36', 'APPROVED', '2024-02-14', '2024-05-14', 1, 0, 2500.00, 2500.00, NULL, NULL, 'Lower back pain evaluation', 'REVIEWER1', 'MEDICAL_DIR', NOW(), NOW());
+
+-- Grant permissions for all tables
+GRANT ALL PRIVILEGES ON member_enrollment TO testuser;
+GRANT ALL PRIVILEGES ON product_catalog TO testuser;
+GRANT ALL PRIVILEGES ON provider_network TO testuser;
+GRANT ALL PRIVILEGES ON claims_authorization TO testuser;
